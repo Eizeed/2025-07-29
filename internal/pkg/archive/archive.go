@@ -10,12 +10,47 @@ import (
 )
 
 const (
-	ErrArchiveFull = "ErrArchiveFull"
+	ErrArchiveFull      = "ErrArchiveFull"
+	ErrArchiveQueueFull = "ErrArchiveQueueFull"
 )
 
 type ArchiveRepo struct {
-	inner  [3]Archive
-	mutex  sync.Mutex
+	Inner []Archive
+	mutex sync.Mutex
+}
+
+func NewArchiveRepo() ArchiveRepo {
+	return ArchiveRepo{
+		Inner: []Archive{},
+		mutex: sync.Mutex{},
+	}
+}
+
+func (ar *ArchiveRepo) Push(archive Archive) error {
+	ar.mutex.Lock()
+	defer ar.mutex.Unlock()
+
+	if len(ar.Inner) >= 3 {
+		return errors.New(ErrArchiveQueueFull)
+	}
+
+	ar.Inner = append(ar.Inner, archive)
+
+	return nil
+}
+
+func (ar *ArchiveRepo) RemoveByUUID(uuid uuid.UUID) (Archive, bool) {
+	ar.mutex.Lock()
+	defer ar.mutex.Unlock()
+
+	for i, archive := range ar.Inner {
+		if archive.UUID == uuid {
+			ar.Inner = append(ar.Inner[:i], ar.Inner[i+1:]...)
+			return archive, true
+		}
+	}
+
+	return Archive{}, false
 }
 
 type Archive struct {
@@ -23,7 +58,7 @@ type Archive struct {
 	Content []string
 }
 
-func New() Archive {
+func NewArchive() Archive {
 	return Archive{
 		UUID:    uuid.New(),
 		Content: []string{},

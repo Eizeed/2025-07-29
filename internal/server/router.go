@@ -1,17 +1,30 @@
 package server
 
 import (
+	"context"
 	"net/http"
 
+	"github.com/Eizeed/2025-07-29/internal/pkg/config"
+	"github.com/Eizeed/2025-07-29/internal/pkg/ctx"
 	"github.com/Eizeed/2025-07-29/internal/server/handlers"
 )
 
-func initRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/api/v1/archive", post(handlers.CreateArchive))
-	mux.HandleFunc("/api/v1/archive/", get(handlers.GetArchiveStatus))
+func initRoutes(mux *http.ServeMux, appCfg *config.AppConfig) {
+	mux.HandleFunc("/api/v1/archive", wrapWithCfg(appCfg, post(handlers.CreateArchive)))
+	mux.HandleFunc("/api/v1/archive/", wrapWithCfg(appCfg, get(handlers.GetArchive)))
+	// mux.HandleFunc("/api/v1/archive/", wrapWithCfg(appCfg, get(handlers.GetArchiveStatus)))
 	// mux.HandleFunc("/task", handler)
 	// mux.HandleFunc("/task/{index}", handler)
 	// mux.HandleFunc("/task/{index}", handler)
+}
+
+func wrapWithCfg(appCfg *config.AppConfig, handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		newCtx := context.WithValue(r.Context(), ctx.AppConfigKey{}, appCfg)
+		r = r.WithContext(newCtx)
+
+		handler(w, r)
+	}
 }
 
 func get(handler http.HandlerFunc) http.HandlerFunc {
@@ -27,7 +40,6 @@ func get(handler http.HandlerFunc) http.HandlerFunc {
 
 func post(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		println("METHOD:", r.Method)
 		if r.Method != "POST" {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
