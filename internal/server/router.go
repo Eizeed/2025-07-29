@@ -12,10 +12,9 @@ import (
 func initRoutes(mux *http.ServeMux, appCfg *config.AppConfig) {
 	mux.HandleFunc("/api/v1/archive", wrapWithCfg(appCfg, post(handlers.CreateArchive)))
 	mux.HandleFunc("/api/v1/archive/", wrapWithCfg(appCfg, get(handlers.GetArchive)))
-	// mux.HandleFunc("/api/v1/archive/", wrapWithCfg(appCfg, get(handlers.GetArchiveStatus)))
-	// mux.HandleFunc("/task", handler)
-	// mux.HandleFunc("/task/{index}", handler)
-	// mux.HandleFunc("/task/{index}", handler)
+	// mux.HandleFunc("/task", wrapWithCfg(get(handler)))
+	// mux.HandleFunc("/task/{index}", wrapWithCfg(patch(handler)))
+	// mux.HandleFunc("/task/{index}", wrapWithCfg(get(handler)))
 }
 
 func wrapWithCfg(appCfg *config.AppConfig, handler http.HandlerFunc) http.HandlerFunc {
