@@ -64,6 +64,7 @@ Also it was really interesting for me to dive into those things as I didn't do s
 My implementaitons might not be ideal but they work on that scale.
 
 ## Notes
+- As the specification did not clearly define the expected behavior of the whole application, I implemented it in the way I consider best.
 - Didn't use `cmp` directory because I only need 1 binary. Also the project is not so big.
 - Used `goroutines` while parsing files
 - `RWMutex` is used on `TaskQueue` might need to read more than write
