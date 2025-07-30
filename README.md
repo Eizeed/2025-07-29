@@ -48,9 +48,9 @@
 Or find its paths with ```GET http://localhost:8080/api/v1/archive```<br/>
 
 ## ENV
-<p>
-There are 4 env variables configured in app:<br/>
-</p>
+#### NOTE: My parser searches ONLY for `.env` file. So before build, please rename `.example-env` to `.env` if building manually
+
+##### There are 4 env variables configured in app:
 
 - PORT - port for server to listen on. Default is `8080`
 - ZIP_PATH - output dir for zip files. Default is `$PWD/zip/`
