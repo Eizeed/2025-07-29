@@ -58,12 +58,10 @@ There are 4 env variables configured in app:<br/>
 - LOG_LEVEL - possible values: 0 - NONE, 1 - ERROR, 2 - WARN, 3 - ERROR, 4 - DEBUG. Default is DEBUG
 
 ## About project
-<p>
 I thought this project is not hard. So even though I'm not fluent in go, i decided to not use ANY dependency besides std.<br/>
-That was my challenge to make something working without relying on 3rd Party libs like ```chi```, ```uuid```, ```dotenv```<br/>
+That was my challenge to make something working without relying on 3rd Party libs like `chi`, `uuid`, `dotenv`<br/>
 Also it was really interesting for me to dive into those things as I didn't do something simmilar before<br/>
 My implementaitons might not be ideal but they work on that scale.
-</p>
 
 ## Notes
 - Didn't use `cmp` directory because I only need 1 binary. Also the project is not so big.
