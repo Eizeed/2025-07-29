@@ -68,9 +68,14 @@ func ZipDirPath() (string, error) {
 }
 
 func defaulFileDir() (string, error) {
-	fileDirPath := filepath.Join(getPwd(), "files")
+	pwd, err := getPwd()
+	if err != nil {
+		return "", err
+	}
 
-	err := os.MkdirAll(fileDirPath, 0755)
+	fileDirPath := filepath.Join(pwd, "files")
+
+	err = os.MkdirAll(fileDirPath, 0755)
 	if err != nil {
 		return "", err
 	}
@@ -79,9 +84,14 @@ func defaulFileDir() (string, error) {
 }
 
 func defaulZigDir() (string, error) {
-	zipDirPath := filepath.Join(getPwd(), "zip")
+	pwd, err := getPwd()
+	if err != nil {
+		return "", err
+	}
 
-	err := os.MkdirAll(zipDirPath, 0755)
+	zipDirPath := filepath.Join(pwd, "zip")
+
+	err = os.MkdirAll(zipDirPath, 0755)
 	if err != nil {
 		return "", err
 	}
@@ -89,14 +99,14 @@ func defaulZigDir() (string, error) {
 	return zipDirPath, nil
 }
 
-func getPwd() string {
+func getPwd() (string, error) {
 	path, err := os.Getwd()
 	if err != nil {
 		log.Println("Error occured while trying to get PWD:", err)
-		panic("Where is PWD?")
+		return "", err
 	}
 
-	return path
+	return path, nil
 }
 
 func ZipFromArchive(archive *archive.Archive) (string, error) {

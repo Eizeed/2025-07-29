@@ -10,50 +10,18 @@ import (
 )
 
 func initRoutes(mux *http.ServeMux, appCfg *config.AppConfig) {
-	mux.HandleFunc("/api/v1/archive", wrapWithCfg(appCfg, post(handlers.CreateArchive)))
-	mux.HandleFunc("/api/v1/archive/", wrapWithCfg(appCfg, get(handlers.GetArchive)))
-	// mux.HandleFunc("/task", wrapWithCfg(get(handler)))
-	// mux.HandleFunc("/task/{index}", wrapWithCfg(patch(handler)))
-	// mux.HandleFunc("/task/{index}", wrapWithCfg(get(handler)))
+	mux.HandleFunc("POST /api/v1/archive", wrapWithCfg(appCfg, handlers.CreateArchive))
+	mux.HandleFunc("GET /api/v1/archive/{zipName}", wrapWithCfg(appCfg, handlers.GetArchive))
+	mux.HandleFunc("POST /api/v1/task", wrapWithCfg(appCfg, handlers.CreateTask))
+	mux.HandleFunc("GET /api/v1/task/completed", wrapWithCfg(appCfg, handlers.GetCompletedTasks))
+	mux.HandleFunc("PATCH /api/v1/task/{uuid}", wrapWithCfg(appCfg, handlers.AddToTask))
+	mux.HandleFunc("GET /api/v1/task/{uuid}", wrapWithCfg(appCfg, handlers.CheckTask))
 }
 
 func wrapWithCfg(appCfg *config.AppConfig, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		newCtx := context.WithValue(r.Context(), ctx.AppConfigKey{}, appCfg)
 		r = r.WithContext(newCtx)
-
-		handler(w, r)
-	}
-}
-
-func get(handler http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "GET" {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		handler(w, r)
-	}
-}
-
-func post(handler http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		handler(w, r)
-	}
-}
-
-func patch(handler http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "PATCH" {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
 
 		handler(w, r)
 	}

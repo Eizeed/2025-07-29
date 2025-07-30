@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"github.com/Eizeed/2025-07-29/internal/pkg/archive"
+	"github.com/Eizeed/2025-07-29/internal/pkg/task"
 	"github.com/Eizeed/2025-07-29/internal/pkg/config"
 )
 
@@ -11,7 +11,7 @@ func StartServer() {
 	mux := http.NewServeMux()
 
 	appCfg := &config.AppConfig {
-		ArchiveRepo: archive.NewArchiveRepo(),
+		TaskQueue: task.NewQueue(),
 	}
 
 	initRoutes(mux, appCfg)

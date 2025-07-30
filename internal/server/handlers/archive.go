@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
-	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
+	"sync"
 
 	stdIo "io"
 
@@ -23,7 +23,11 @@ func CreateArchive(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	p := params{}
 
-	decoder.Decode(&p)
+	err := decoder.Decode(&p)
+	if err != nil {
+		responseWithError(w, 400, fmt.Sprintln("Failed to decode body:", err))
+		return
+	}
 
 	if len(p.URLs) > 3 {
 		responseWithError(w, 400, "urls.len should be less or equal to 3")
@@ -35,65 +39,72 @@ func CreateArchive(w http.ResponseWriter, r *http.Request) {
 	failed := []string{}
 	succeeded := []string{}
 
+	type parseRes struct {
+		fileRes FileRes
+		url     string
+		err     error
+	}
+	resCh := make(chan parseRes, len(p.URLs))
+
 	client := http.DefaultClient
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(p.URLs))
 	for _, url := range p.URLs {
-		res, err := client.Get(url)
+		go func(url string) {
+			defer wg.Done()
+
+			fileRes, err := parseFile(url, client)
+			if err != nil {
+				log.Println(err.Error())
+				resCh <- parseRes{
+					fileRes: FileRes{},
+					url:     url,
+					err:     err,
+				}
+				return
+			}
+
+			resCh <- parseRes{
+				fileRes: fileRes,
+				url:     url,
+				err:     nil,
+			}
+		}(url)
+	}
+
+	wg.Wait()
+	close(resCh)
+
+	for res := range resCh {
+		if res.err != nil {
+			failed = append(failed, res.url)
+			log.Println(res.err.Error())
+			continue
+		}
+
+		filePath, err := io.SaveToFileDir(res.fileRes.name, res.fileRes.bytes)
 		if err != nil {
+			failed = append(failed, res.url)
+			log.Println(res.err.Error())
 			continue
 		}
 
-		contentType := res.Header.Get("Content-Type")
-		if !strings.HasPrefix(contentType, "image/jpeg") {
-			failed = append(failed, url)
-			log.Println("Bad content type:", contentType)
-			continue
-		}
+		succeeded = append(succeeded, res.url)
 
-		blobName := res.Header.Get("Content-Disposition")
-		if blobName == "" {
-			failed = append(failed, url)
-			log.Println("Bad content disposition:", blobName)
-			continue
-		}
-
-		_, data, err := mime.ParseMediaType(blobName)
-		if err != nil {
-			failed = append(failed, url)
-			log.Println("Error parsing media type:", err)
-			continue
-		}
-
-		name := data["filename"]
-		if name == "" {
-			failed = append(failed, url)
-			log.Println("Bad filename")
-			continue
-		}
-
-		bytes, err := stdIo.ReadAll(res.Body)
-		res.Body.Close()
-		if err != nil {
-			failed = append(failed, url)
-			log.Println("Failed to read from res.Body")
-			continue
-		}
-
-		filePath, err := io.SaveToFileDir(name, bytes)
-		if err != nil {
-			failed = append(failed, url)
-			log.Println("Failed to save", err)
-			continue
-		}
-
-		archive.AddPath(filePath)
-		succeeded = append(succeeded, url)
+		// Can't push more than archive can hold
+		// because we check amount of urls at start
+		// and it is oneshot operation
+		_ = archive.AddPath(filePath)
 	}
 
 	path, err := io.ZipFromArchive(&archive)
 	if err != nil {
 		log.Println("Failed to zip archive", err)
 		responseWithError(w, 400, "Failed to zip archive "+err.Error())
+		return
 	}
+	httpPath := "http://localhost:8080/api/v1/archive/" + filepath.Base(path)
 
 	type ResBody struct {
 		Succeeded []string `json:"succeeded"`
@@ -102,7 +113,6 @@ func CreateArchive(w http.ResponseWriter, r *http.Request) {
 		HttpPath  string   `json:"http_path"`
 	}
 
-	httpPath := "http://localhost:8080/api/v1/archive/" + filepath.Base(path)
 
 	resBody := ResBody{
 		Succeeded: succeeded,
@@ -115,12 +125,8 @@ func CreateArchive(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetArchive(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
+	zipName := r.PathValue("zipName")
 
-	// It's okay to take 4th because of router
-	// This route has parts[0] which is ""
-	// and after that we get "api", "v1" and our file name
-	zipName := parts[4]
 	zipDirPath, err := io.ZipDirPath()
 	if err != nil {
 		responseWithError(w, 400, "Failed to open zip dir path: "+err.Error())
