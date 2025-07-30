@@ -1,38 +1,44 @@
 ## Routes
-
 #### GET http://localhost:8080/api/v1/archive
+<p>
 req: None <br/>
 res: ```{ "paths": ["local_path": string, "http_path": string] }``` <br/>
 exp: Returns every archive in zipDirPath<br/>
-
+<p/>
 #### POST http://localhost:8080/api/v1/archive
+<p>
 req: ```{ "urls": [string] }``` <br/>
 res: ```{ "succeeded": [string], "failed": [string], "local_path": string, "http_path": string }``` <br/>
 exp: Downloads files, zip them and return to user<br/>
-
+<p/>
 #### GET http://localhost:8080/api/v1/archive/{zipName}
+<p>
 params: ```zipName: {zipUuid}.zip``` <br/>
 req: None <br/>
 res: binary ZIP-archive <br/>
 exp: Tries to get zip-archive with given name<br/>
-
+<p/>
 #### GET http://localhost:8080/api/v1/task
+<p>
 req: None <br/>
 res: ```{ "tasks": [ { "uuid": string, "content": [string] } ] }``` <br/>
 exp: Gets every current task in queue<br/>
-
+<p/>
 #### POST http://localhost:8080/api/v1/task
+<p>
 req: None <br/>
 res: ```{ "uuid": string }``` <br/>
 exp: Creates a task. Will fail if there are 3 tasks in queue<br/>
-
+<p/>
 #### PATCH http://localhost:8080/api/v1/task/{uuid}
+<p>
 params: ```uuid: string``` <br/>
 req: ```{ "urls": [string] }``` <br/>
 res: ```{ "task_uuid": string, "succeeded": [string], "failed": [string] }``` <br/>
 exp: Downloads files and saves them in tasks<br/>
-
+<p/>
 #### GET http://localhost:8080/api/v1/task/{uuid}
+<p>
 params: ```uuid: string```<br/>
 req: None <br/>
 res: if archive is full ```{ "task_uuid": string, "archive_uuid": string, "archive_content": [string], "status": string, "archive_local_path": string, "archive_http_path": string }```<br/>
@@ -40,6 +46,7 @@ res: if archive is not full ```{ "task_uuid": string, "archive_uuid": string, "a
 exp: Show status of Task. If task has 3 files it will return 2 urls to zip archive.<br/>
 Task will be removed from queue and user will be able to get archive with ```GET http://localhost:8080/api/v1/archive/{zipName}```<br/>
 Or find its paths with ```GET http://localhost:8080/api/v1/archive```<br/>
+<p/>
 
 ## ENV
 <p>
