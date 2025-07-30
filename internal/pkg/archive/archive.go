@@ -53,7 +53,6 @@ func (archive *Archive) AddPath(path string) error {
 		return errors.New(ErrArchiveFull)
 	}
 
-	println("Adding ", path)
 	archive.Content = append(archive.Content, path)
 	return nil
 }

@@ -33,6 +33,20 @@ func responseWithError(w http.ResponseWriter, statusCode int, errMsg string) {
 	responseWithBody(w, statusCode, err)
 }
 
+func checkContentType(url string, client *http.Client) error {
+	res, err := client.Head(url)
+	if err != nil {
+		return err
+	}
+
+	contentType := res.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "image/jpeg") && !strings.HasPrefix(contentType, "application/pdf") {
+		return errors.New(fmt.Sprint("Bad content type: ", contentType))
+	}
+
+	return nil
+}
+
 type FileRes struct {
 	name  string
 	bytes []byte
@@ -45,18 +59,18 @@ func parseFile(url string, client *http.Client) (FileRes, error) {
 	}
 
 	contentType := res.Header.Get("Content-Type")
-	if !strings.HasPrefix(contentType, "image/jpeg") {
-		return FileRes{}, errors.New(fmt.Sprintln("Bad content type:", contentType))
+	if !strings.HasPrefix(contentType, "image/jpeg") && !strings.HasPrefix(contentType, "application/pdf") {
+		return FileRes{}, errors.New(fmt.Sprintln("Bad content type: ", contentType))
 	}
 
 	blobName := res.Header.Get("Content-Disposition")
 	if blobName == "" {
-		return FileRes{}, errors.New(fmt.Sprintln("Bad content disposition:", blobName))
+		return FileRes{}, errors.New(fmt.Sprintln("Bad content disposition: ", blobName))
 	}
 
 	_, data, err := mime.ParseMediaType(blobName)
 	if err != nil {
-		return FileRes{}, errors.New(fmt.Sprintln("Error parsing media type:", err))
+		return FileRes{}, errors.New(fmt.Sprintln("Error parsing media type: ", err))
 	}
 
 	name := data["filename"]

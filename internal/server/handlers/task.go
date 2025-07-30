@@ -47,7 +47,7 @@ func AddToTask(w http.ResponseWriter, r *http.Request) {
 
 	err = decoder.Decode(&p)
 	if err != nil {
-		responseWithError(w, 400, fmt.Sprintln("Failed to decode body:", err))
+		responseWithError(w, 400, fmt.Sprintln("Failed to decode body: ", err))
 		return
 	}
 
@@ -71,9 +71,20 @@ func AddToTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if contentLen+len(p.URLs) > 3 {
-		responseWithError(w, 400, fmt.Sprint("Archive contains", contentLen, "out of 3. You provided", len(p.URLs), "URLs"))
+		responseWithError(w, 400, fmt.Sprint("Archive contains ", contentLen, " out of 3. You provided ", len(p.URLs), " URLs"))
 		return
 	}
+
+	client := http.DefaultClient
+
+	for _, u := range p.URLs {
+		err = checkContentType(u, client)
+		if err != nil {
+			responseWithError(w, 400, err.Error())
+			return
+		}
+	}
+
 	failed := []string{}
 	succeeded := []string{}
 
@@ -83,8 +94,6 @@ func AddToTask(w http.ResponseWriter, r *http.Request) {
 		err     error
 	}
 	resCh := make(chan parseRes, len(p.URLs))
-
-	client := http.DefaultClient
 
 	wg := sync.WaitGroup{}
 	wg.Add(len(p.URLs))

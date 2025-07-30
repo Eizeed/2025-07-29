@@ -25,13 +25,23 @@ func CreateArchive(w http.ResponseWriter, r *http.Request) {
 
 	err := decoder.Decode(&p)
 	if err != nil {
-		responseWithError(w, 400, fmt.Sprintln("Failed to decode body:", err))
+		responseWithError(w, 400, fmt.Sprintln("Failed to decode body: ", err))
 		return
 	}
 
 	if len(p.URLs) > 3 {
 		responseWithError(w, 400, "urls.len should be less or equal to 3")
 		return
+	}
+
+	client := http.DefaultClient
+
+	for _, u := range p.URLs {
+		err = checkContentType(u, client)
+		if err != nil {
+			responseWithError(w, 400, err.Error())
+			return
+		}
 	}
 
 	archive := archive.NewArchive()
@@ -45,8 +55,6 @@ func CreateArchive(w http.ResponseWriter, r *http.Request) {
 		err     error
 	}
 	resCh := make(chan parseRes, len(p.URLs))
-
-	client := http.DefaultClient
 
 	wg := sync.WaitGroup{}
 	wg.Add(len(p.URLs))
@@ -112,7 +120,6 @@ func CreateArchive(w http.ResponseWriter, r *http.Request) {
 		LocalPath string   `json:"local_path"`
 		HttpPath  string   `json:"http_path"`
 	}
-
 
 	resBody := ResBody{
 		Succeeded: succeeded,
