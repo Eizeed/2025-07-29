@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/Eizeed/2025-07-29/internal/pkg/archive"
 	"github.com/Eizeed/2025-07-29/internal/pkg/constants"
+	"github.com/Eizeed/2025-07-29/internal/pkg/ctx"
 	"github.com/Eizeed/2025-07-29/internal/pkg/io"
 )
 
@@ -108,7 +108,6 @@ func CreateArchive(w http.ResponseWriter, r *http.Request) {
 
 			fileRes, err := parseFile(url, client)
 			if err != nil {
-				log.Println(err.Error())
 				resCh <- parseRes{
 					fileRes: FileRes{},
 					url:     url,
@@ -128,17 +127,19 @@ func CreateArchive(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 	close(resCh)
 
+	log := ctx.GetAppConfig(r.Context()).Logger
+
 	for res := range resCh {
 		if res.err != nil {
 			failed = append(failed, res.url)
-			log.Println(res.err.Error())
+			log.Error(res.err.Error())
 			continue
 		}
 
 		filePath, err := io.SaveToFileDir(res.fileRes.name, res.fileRes.bytes)
 		if err != nil {
 			failed = append(failed, res.url)
-			log.Println(res.err.Error())
+			log.Error(res.err.Error())
 			continue
 		}
 
@@ -152,7 +153,6 @@ func CreateArchive(w http.ResponseWriter, r *http.Request) {
 
 	path, err := io.ZipFromArchive(&archive)
 	if err != nil {
-		log.Println("Failed to zip archive", err)
 		responseWithError(w, 400, "Failed to zip archive "+err.Error())
 		return
 	}

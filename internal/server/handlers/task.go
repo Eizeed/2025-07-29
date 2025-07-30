@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"path/filepath"
 	"sync"
@@ -130,7 +129,6 @@ func AddToTask(w http.ResponseWriter, r *http.Request) {
 
 			fileRes, err := parseFile(url, client)
 			if err != nil {
-				log.Println(err.Error())
 				resCh <- parseRes{
 					fileRes: FileRes{},
 					url:     url,
@@ -150,17 +148,18 @@ func AddToTask(w http.ResponseWriter, r *http.Request) {
 	wg.Wait()
 	close(resCh)
 
+	log := appCfg.Logger
 	for res := range resCh {
 		if res.err != nil {
 			failed = append(failed, res.url)
-			log.Println(res.err.Error())
+			log.Error(res.err.Error())
 			continue
 		}
 
 		filePath, err := io.SaveToFileDir(res.fileRes.name, res.fileRes.bytes)
 		if err != nil {
 			failed = append(failed, res.url)
-			log.Println(res.err.Error())
+			log.Error(res.err.Error())
 			continue
 		}
 
@@ -211,7 +210,6 @@ func CheckTask(w http.ResponseWriter, r *http.Request) {
 	if contentLen == constants.URL_LIMIT {
 		localPath, err = io.ZipFromArchive(&task.Archive)
 		if err != nil {
-			log.Println("Failed to zip archive", err)
 			responseWithError(w, 400, "Failed to zip archive "+err.Error())
 			return
 		}
