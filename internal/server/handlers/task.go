@@ -189,6 +189,8 @@ func CheckTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		httpPath = "http://localhost:8080/api/v1/archive/" + filepath.Base(localPath)
+
+		appCfg.TaskQueue.RemoveByUUID(task.UUID)
 	}
 
 	type ResBody struct {
