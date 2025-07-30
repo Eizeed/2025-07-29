@@ -37,7 +37,7 @@ type Logger struct {
 
 func NewLogger(level LogLevel) Logger {
 	logger := Logger{
-		log:   log.New(os.Stdout, "", log.Ldate|log.LUTC|log.Lshortfile),
+		log:   log.New(os.Stdout, "", log.Ldate|log.LUTC),
 		level: level,
 	}
 
@@ -47,7 +47,9 @@ func NewLogger(level LogLevel) Logger {
 func (logger *Logger) Debug(args ...any) {
 	if logger.level >= DEBUG {
 		logger.log.SetPrefix("[DEBUG] ")
+		logger.log.SetFlags(log.Ldate | log.LUTC | log.Lshortfile)
 		logger.log.Print(args...)
+		logger.log.SetFlags(log.Ldate | log.LUTC)
 	}
 }
 
