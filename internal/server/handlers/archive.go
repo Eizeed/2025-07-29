@@ -65,9 +65,15 @@ func CreateArchive(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decoder := json.NewDecoder(r.Body)
+	err := r.Body.Close()
+	if err != nil {
+		responseWithError(w, 400, fmt.Sprintln("Failed to close body: ", err))
+		return
+	}
+
 	p := params{}
 
-	err := decoder.Decode(&p)
+	err = decoder.Decode(&p)
 	if err != nil {
 		responseWithError(w, 400, fmt.Sprintln("Failed to decode body: ", err))
 		return

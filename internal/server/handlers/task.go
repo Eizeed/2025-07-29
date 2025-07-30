@@ -69,6 +69,12 @@ func AddToTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decoder := json.NewDecoder(r.Body)
+	err = r.Body.Close()
+	if err != nil {
+		responseWithError(w, 400, fmt.Sprintln("Failed to close body: ", err))
+		return
+	}
+
 	p := params{}
 
 	err = decoder.Decode(&p)

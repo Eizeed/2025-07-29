@@ -129,8 +129,10 @@ func ZipFromArchive(archive *archive.Archive) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer zipFile.Close()
 
 	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
 
 	for _, content := range archive.Content {
 		bytesContent, err := os.ReadFile(content)
@@ -148,12 +150,12 @@ func ZipFromArchive(archive *archive.Archive) (string, error) {
 		writer.Write(bytesContent)
 	}
 
-	if err := zipWriter.Close(); err != nil {
-		return "", err
-	}
-	if err := zipFile.Close(); err != nil {
-		return "", err
-	}
+	// if err := zipWriter.Close(); err != nil {
+	// 	return "", err
+	// }
+	// if err := zipFile.Close(); err != nil {
+	// 	return "", err
+	// }
 
 	return zipPath, nil
 }
