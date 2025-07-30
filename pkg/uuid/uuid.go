@@ -68,3 +68,7 @@ func Parse(str string) (UUID, error) {
 
 	return uuid, nil
 }
+
+func (uuid UUID) MarshalText() (text []byte, err error) {
+	return []byte(uuid.String()), nil
+}
