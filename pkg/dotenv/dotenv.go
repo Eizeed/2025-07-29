@@ -1,15 +1,14 @@
 package dotenv
 
 import (
-	"log"
 	"os"
 	"strings"
 )
 
-func DotEnv() {
+func DotEnv() error {
 	bytes, err := os.ReadFile("./.env")
 	if err != nil {
-		log.Fatalln("Error parsing .env:", err)
+		return err
 	}
 
 	blob := string(bytes)
@@ -23,4 +22,6 @@ func DotEnv() {
 			os.Setenv(key, val)
 		}
 	}
+
+	return nil
 }

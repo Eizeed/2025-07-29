@@ -8,6 +8,8 @@ import (
 	"mime"
 	"net/http"
 	"strings"
+
+	"github.com/Eizeed/2025-07-29/pkg/uuid"
 )
 
 func responseWithBody(w http.ResponseWriter, statusCode int, body any) {
@@ -63,19 +65,28 @@ func parseFile(url string, client *http.Client) (FileRes, error) {
 		return FileRes{}, errors.New(fmt.Sprintln("Bad content type: ", contentType))
 	}
 
+	ext := ""
+	switch contentType {
+	case "image/jpeg":
+		ext = ".jpeg"
+	case "application/pdf":
+		ext = ".pdf"
+	default:
+		return FileRes{}, errors.New("Invalid Content-Type")
+	}
+
 	blobName := res.Header.Get("Content-Disposition")
-	if blobName == "" {
-		return FileRes{}, errors.New(fmt.Sprintln("Bad content disposition: ", blobName))
-	}
-
-	_, data, err := mime.ParseMediaType(blobName)
-	if err != nil {
-		return FileRes{}, errors.New(fmt.Sprintln("Error parsing media type: ", err))
-	}
-
-	name := data["filename"]
-	if name == "" {
-		return FileRes{}, errors.New(fmt.Sprintln("Bad filename"))
+	name := uuid.NewV4().String() + ext
+	if blobName != "" {
+		_, data, err := mime.ParseMediaType(blobName)
+		if err == nil {
+			filename := data["filename"]
+			if filename == "" {
+				name = uuid.NewV4().String()
+			} else {
+				name = filename
+			}
+		}
 	}
 
 	bytes, err := io.ReadAll(res.Body)

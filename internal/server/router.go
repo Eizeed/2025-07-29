@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/Eizeed/2025-07-29/internal/pkg/config"
 	"github.com/Eizeed/2025-07-29/internal/pkg/ctx"
@@ -21,9 +22,12 @@ func initRoutes(mux *http.ServeMux, appCfg *config.AppConfig) {
 
 func wrapWithCfg(appCfg *config.AppConfig, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		now := time.Now().UTC()
+		appCfg.Logger.Info("Reqest accepted. Path: ", r.URL, ", Method: ", r.Method)
 		newCtx := context.WithValue(r.Context(), ctx.AppConfigKey{}, appCfg)
 		r = r.WithContext(newCtx)
 
 		handler(w, r)
+		appCfg.Logger.Info("Reqest resolved. Time elapsed: ", time.Since(now).Milliseconds())
 	}
 }

@@ -93,12 +93,12 @@ func AddToTask(w http.ResponseWriter, r *http.Request) {
 	contentLen := len(task.Archive.Content)
 
 	if contentLen == constants.URL_LIMIT {
-		responseWithError(w, 400, fmt.Sprint("Archive already contains", constants.URL_LIMIT, "URLs"))
+		responseWithError(w, 400, fmt.Sprint("Archive already contains ", constants.URL_LIMIT, " URLs"))
 		return
 	}
 
 	if contentLen+len(p.URLs) > constants.URL_LIMIT {
-		responseWithError(w, 400, fmt.Sprint("Archive contains ", contentLen, " out of", constants.URL_LIMIT, ". You provided ", len(p.URLs), " URLs"))
+		responseWithError(w, 400, fmt.Sprint("Archive contains ", contentLen, " out of ", constants.URL_LIMIT, ". You provided ", len(p.URLs), " URLs"))
 		return
 	}
 
