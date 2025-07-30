@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/Eizeed/2025-07-29/internal/pkg/archive"
-	"github.com/google/uuid"
+	"github.com/Eizeed/2025-07-29/pkg/uuid"
 )
 
 func SaveToFileDir(name string, bytes []byte) (string, error) {
@@ -107,7 +107,7 @@ func ZipFromArchive(archive *archive.Archive) (string, error) {
 
 	uuidStr := archive.UUID.String()
 	if uuidStr == "" {
-		uuidStr = uuid.New().String()
+		uuidStr = uuid.NewV4().String()
 	}
 	zipPath := filepath.Join(zipDirPath, uuidStr+".zip")
 

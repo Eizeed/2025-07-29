@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/google/uuid"
+	"github.com/Eizeed/2025-07-29/pkg/uuid"
 )
 
 const (
@@ -60,7 +60,7 @@ type Archive struct {
 
 func NewArchive() Archive {
 	return Archive{
-		UUID:    uuid.New(),
+		UUID:    uuid.NewV4(),
 		Content: []string{},
 	}
 }
