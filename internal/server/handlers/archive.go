@@ -6,14 +6,58 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"sync"
 
 	stdIo "io"
 
 	"github.com/Eizeed/2025-07-29/internal/pkg/archive"
+	"github.com/Eizeed/2025-07-29/internal/pkg/constants"
 	"github.com/Eizeed/2025-07-29/internal/pkg/io"
 )
+
+func GetArchiveList(w http.ResponseWriter, r *http.Request) {
+	zipDirPath, err := io.ZipDirPath()
+	if err != nil {
+		responseWithError(w, 400, "Failed to open zip dir path: "+err.Error())
+		return
+	}
+
+	entries, err := os.ReadDir(zipDirPath)
+	if err != nil {
+		responseWithError(w, 400, "Failed to read zip dir: "+err.Error())
+		return
+	}
+
+	type zipPath struct {
+		LocalPath string `json:"local_path"`
+		HttpPath  string `json:"http_path"`
+	}
+
+	res := []zipPath{}
+
+	for _, entry := range entries {
+		ext := path.Ext(entry.Name())
+		if ext == ".zip" {
+			localPath := filepath.Join(zipDirPath, entry.Name())
+			httpPath := "http://localhost:8080/api/v1/archive/" + filepath.Base(entry.Name())
+
+			res = append(res, zipPath{
+				LocalPath: localPath,
+				HttpPath:  httpPath,
+			})
+		}
+	}
+
+	type ResBody struct {
+		Paths []zipPath `json:"paths"`
+	}
+
+	responseWithBody(w, 200, ResBody{
+		Paths: res,
+	})
+}
 
 func CreateArchive(w http.ResponseWriter, r *http.Request) {
 	type params struct {
@@ -29,8 +73,8 @@ func CreateArchive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(p.URLs) > 3 {
-		responseWithError(w, 400, "urls.len should be less or equal to 3")
+	if len(p.URLs) > constants.URL_LIMIT {
+		responseWithError(w, 400, fmt.Sprint("urls.len should be less or equal to ", constants.URL_LIMIT))
 		return
 	}
 

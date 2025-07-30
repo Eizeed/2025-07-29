@@ -8,13 +8,40 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/Eizeed/2025-07-29/internal/pkg/constants"
 	"github.com/Eizeed/2025-07-29/internal/pkg/ctx"
 	"github.com/Eizeed/2025-07-29/internal/pkg/io"
 	"github.com/Eizeed/2025-07-29/pkg/uuid"
 )
 
+func GetTasks(w http.ResponseWriter, r *http.Request) {
+	appCfg := ctx.GetAppConfig(r.Context())
+
+	type taskView struct {
+		UUID    uuid.UUID `json:"uuid"`
+		Content []string  `json:"content"`
+	}
+
+	type ResBody struct {
+		Tasks []taskView `json:"tasks"`
+	}
+
+	tasks := []taskView{}
+
+	for _, task := range appCfg.TaskQueue.ViewTasks() {
+		tasks = append(tasks, taskView{
+			UUID:    task.UUID,
+			Content: task.Archive.Content,
+		})
+	}
+
+	responseWithBody(w, 200, ResBody{
+		Tasks: tasks,
+	})
+}
+
 func CreateTask(w http.ResponseWriter, r *http.Request) {
-	appCfg := ctx.GetAppConfigFromConfig(r.Context())
+	appCfg := ctx.GetAppConfig(r.Context())
 	taskUuid, err := appCfg.TaskQueue.InsertTask()
 	if err != nil {
 		responseWithError(w, 400, err.Error())
@@ -51,12 +78,12 @@ func AddToTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(p.URLs) > 3 {
-		responseWithError(w, 400, "urls.len should be less or equal to 3")
+	if len(p.URLs) > constants.URL_LIMIT {
+		responseWithError(w, 400, fmt.Sprint("urls.len should be less or equal to ", constants.URL_LIMIT))
 		return
 	}
 
-	appCfg := ctx.GetAppConfigFromConfig(r.Context())
+	appCfg := ctx.GetAppConfig(r.Context())
 	task, exists := appCfg.TaskQueue.GetTask(taskUuid)
 	if !exists {
 		responseWithError(w, 404, "Task not found")
@@ -65,13 +92,13 @@ func AddToTask(w http.ResponseWriter, r *http.Request) {
 
 	contentLen := len(task.Archive.Content)
 
-	if contentLen == 3 {
-		responseWithError(w, 400, "Archive already contains 3 URLs")
+	if contentLen == constants.URL_LIMIT {
+		responseWithError(w, 400, fmt.Sprint("Archive already contains", constants.URL_LIMIT, "URLs"))
 		return
 	}
 
-	if contentLen+len(p.URLs) > 3 {
-		responseWithError(w, 400, fmt.Sprint("Archive contains ", contentLen, " out of 3. You provided ", len(p.URLs), " URLs"))
+	if contentLen+len(p.URLs) > constants.URL_LIMIT {
+		responseWithError(w, 400, fmt.Sprint("Archive contains ", contentLen, " out of", constants.URL_LIMIT, ". You provided ", len(p.URLs), " URLs"))
 		return
 	}
 
@@ -168,7 +195,7 @@ func CheckTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	appCfg := ctx.GetAppConfigFromConfig(r.Context())
+	appCfg := ctx.GetAppConfig(r.Context())
 
 	task, exists := appCfg.TaskQueue.GetTask(taskUuid)
 	if !exists {
@@ -177,11 +204,11 @@ func CheckTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	contentLen := len(task.Archive.Content)
-	statusStr := fmt.Sprint(contentLen, " out of 3")
+	statusStr := fmt.Sprint(contentLen, " out of ", constants.URL_LIMIT)
 
 	localPath := ""
 	httpPath := ""
-	if contentLen == 3 {
+	if contentLen == constants.URL_LIMIT {
 		localPath, err = io.ZipFromArchive(&task.Archive)
 		if err != nil {
 			log.Println("Failed to zip archive", err)
@@ -210,14 +237,4 @@ func CheckTask(w http.ResponseWriter, r *http.Request) {
 		ArchiveLocalPath: localPath,
 		ArchiveHttpPath:  httpPath,
 	})
-}
-
-func GetCompletedTasks(w http.ResponseWriter, r *http.Request) {
-	res, err := json.Marshal("Get Completed Tasks")
-	if err != nil {
-		responseWithError(w, 400, err.Error())
-		return
-	}
-
-	w.Write(res)
 }

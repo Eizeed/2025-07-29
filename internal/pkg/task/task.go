@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/Eizeed/2025-07-29/internal/pkg/archive"
+	"github.com/Eizeed/2025-07-29/internal/pkg/constants"
 	"github.com/Eizeed/2025-07-29/pkg/uuid"
 )
 
@@ -25,11 +26,15 @@ func NewQueue() TaskQueue {
 	}
 }
 
+func (queue *TaskQueue) ViewTasks() []Task {
+	return queue.inner
+}
+
 func (queue *TaskQueue) InsertTask() (uuid.UUID, error) {
 	queue.rw.Lock()
 	defer queue.rw.Unlock()
 
-	if len(queue.inner) >= 3 {
+	if len(queue.inner) >= constants.TASK_LIMIT {
 		return uuid.UUID{}, errors.New(ErrQueueFull)
 	}
 
@@ -87,7 +92,10 @@ func (task *Task) Push(path string) error {
 	task.mutex.Lock()
 	defer task.mutex.Unlock()
 
-	task.Archive.AddPath(path)
+	err := task.Archive.AddPath(path)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

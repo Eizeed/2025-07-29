@@ -32,17 +32,19 @@ func SaveToFileDir(name string, bytes []byte) (string, error) {
 func fileDirPath() (string, error) {
 	path := os.Getenv("FILE_PATH")
 	if path == "" {
-		return defaulFileDir()
+		return defaultFileDir()
 	}
 
-	absPath, err := filepath.Abs(path)
+	absDirPath, err := filepath.Abs(path)
 	if err != nil {
-		return defaulFileDir()
+		return defaultFileDir()
 	}
+
+	absPath := filepath.Join(absDirPath, "files")
 
 	err = os.MkdirAll(absPath, 0755)
 	if err != nil {
-		return defaulFileDir()
+		return defaultFileDir()
 	}
 
 	return absPath, nil
@@ -51,23 +53,25 @@ func fileDirPath() (string, error) {
 func ZipDirPath() (string, error) {
 	path := os.Getenv("ZIP_PATH")
 	if path == "" {
-		return defaulZigDir()
+		return defaultZipDir()
 	}
 
-	absPath, err := filepath.Abs(path)
+	absDirPath, err := filepath.Abs(path)
 	if err != nil {
-		return defaulZigDir()
+		return defaultZipDir()
 	}
+
+	absPath := filepath.Join(absDirPath, "zip")
 
 	err = os.MkdirAll(absPath, 0755)
 	if err != nil {
-		return defaulZigDir()
+		return defaultZipDir()
 	}
 
 	return absPath, nil
 }
 
-func defaulFileDir() (string, error) {
+func defaultFileDir() (string, error) {
 	pwd, err := getPwd()
 	if err != nil {
 		return "", err
@@ -83,7 +87,7 @@ func defaulFileDir() (string, error) {
 	return fileDirPath, nil
 }
 
-func defaulZigDir() (string, error) {
+func defaultZipDir() (string, error) {
 	pwd, err := getPwd()
 	if err != nil {
 		return "", err
@@ -145,6 +149,9 @@ func ZipFromArchive(archive *archive.Archive) (string, error) {
 	}
 
 	if err := zipWriter.Close(); err != nil {
+		return "", err
+	}
+	if err := zipFile.Close(); err != nil {
 		return "", err
 	}
 
